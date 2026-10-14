@@ -5,13 +5,8 @@ import { useState, type FormEvent } from "react";
 import { CalendarDays, MapPin, Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
 import { AddUserDialog } from "@/components/auth/add-user-dialog";
 
-const sampleEvents = [
-  { id: 1, title: "Under the stars: music night", category: "Music", city: "Coimbatore", date: "2026-11-07T18:30:00+05:30", price: 499, active: true, emoji: "🎵", colour: "bg-violet-100" },
-  { id: 2, title: "A little clay, a lot of creativity", category: "Workshop", city: "Chennai", date: "2026-11-08T10:00:00+05:30", price: 1200, active: true, emoji: "🎨", colour: "bg-sky-100" },
-  { id: 3, title: "The neighbourhood food fair", category: "Food", city: "Coimbatore", date: "2026-11-14T16:00:00+05:30", price: 0, active: false, emoji: "🍋", colour: "bg-orange-100" },
-  { id: 4, title: "Sunday morning on the court", category: "Sports", city: "Bengaluru", date: "2026-11-15T07:00:00+05:30", price: 250, active: true, emoji: "🏸", colour: "bg-lime-100" },
-  { id: 5, title: "Little makers, big imaginations", category: "Kids", city: "Chennai", date: "2026-11-21T11:00:00+05:30", price: 350, active: false, emoji: "🧸", colour: "bg-pink-100" },
-];
+import { sampleEvents } from "@/lib/events/sample-events";
+
 const dateFormat = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 const priceFormat = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 const emptyFilters = { category: "", city: "", dateFrom: "", dateTo: "", minPrice: "", maxPrice: "", status: "" };
@@ -106,7 +101,7 @@ export function EventsBoard() {
               <span aria-hidden="true" className={`flex size-11 shrink-0 items-center justify-center rounded-2xl text-xl ${event.colour}`}>{event.emoji}</span>
               <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${event.colour}`}>{event.category}</span>
             </div>
-            <h2 className="mt-4 text-lg font-semibold leading-7 wrap-anywhere">{event.title}</h2>
+            <h2 className="mt-4 text-lg font-semibold leading-7 wrap-anywhere"><Link href={`/admin/event/${event.id}`} className="rounded-md underline-offset-4 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{event.title}</Link></h2>
             <dl className="mt-4 space-y-3 text-sm text-[#756477]">
               <div className="flex items-start gap-2"><dt className="shrink-0"><span className="sr-only">City</span><MapPin className="mt-0.5 size-4" aria-hidden="true" /></dt><dd className="min-w-0 wrap-anywhere">{event.city}</dd></div>
               <div className="flex items-start gap-2"><dt className="shrink-0"><span className="sr-only">Date and time</span><CalendarDays className="mt-0.5 size-4" aria-hidden="true" /></dt><dd className="min-w-0 leading-6">{dateFormat.format(new Date(event.date))}</dd></div>
@@ -127,7 +122,7 @@ export function EventsBoard() {
             <tbody className="divide-y divide-[#f0e7e1]">
               {filtered.map(event => (
                 <tr key={event.id} className="transition-colors hover:bg-background/70">
-                  <th scope="row" className="min-w-56 max-w-80 px-5 py-5 font-semibold leading-6">{event.title}</th>
+                  <th scope="row" className="min-w-56 max-w-80 px-5 py-5 font-semibold leading-6"><Link href={`/admin/event/${event.id}`} className="rounded-md underline-offset-4 hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{event.title}</Link></th>
                   <td className="px-5 py-5"><span className={`inline-flex rounded-full px-3 py-1.5 text-xs font-medium ${event.colour}`}>{event.category}</span></td>
                   <td className="px-5 py-5 text-[#756477]">{event.city}</td>
                   <td className="whitespace-nowrap px-5 py-5 text-[#756477]">{dateFormat.format(new Date(event.date))}</td>

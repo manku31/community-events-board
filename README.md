@@ -37,4 +37,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Backend setup
 
-Prisma ORM connects to Neon PostgreSQL using `DATABASE_URL` from `.env`. Run `npm run db:check` to verify the connection and `npm run test:api` to check the shared response helpers. See [backend setup and JSON response conventions](docs/backend.md) for commands and usage.
+Prisma ORM connects to Neon PostgreSQL using `DATABASE_URL` from `.env`. Run `npm run db:check` to verify the connection. See [backend setup and JSON response conventions](docs/backend.md) for commands and usage.

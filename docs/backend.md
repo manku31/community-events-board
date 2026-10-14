@@ -23,7 +23,6 @@ The connection check does not create or modify any rows or tables, and does not 
 | `npm run db:migrate -- --name <name>` | Create and apply a development migration after adding models |
 | `npm run db:deploy` | Apply existing migrations in production |
 | `npm run db:studio` | Open Prisma Studio |
-| `npm run test:api` | Check the reusable JSON response contract |
 | `npm run build` | Generate Prisma Client and build the app |
 
 Prisma Client is generated into `generated/prisma` and is ignored by Git. Generation also runs after installation and before builds. Generation can run without database credentials; actual database queries require `DATABASE_URL`.

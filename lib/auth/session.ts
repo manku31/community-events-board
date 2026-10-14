@@ -27,7 +27,7 @@ async function lockFamily(tx: Prisma.TransactionClient, familyId: string) {
 
 // Call only after checking credentials or creating a validated account.
 export async function issueAuthTokens(userId: number, db: Prisma.TransactionClient = prisma): Promise<AuthTokens> {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+  const user = await db.user.findUnique({ where: { id: userId, status: true }, select: { id: true, role: true } });
   if (!user) throw new ApiError(401, "UNAUTHORIZED", "Please sign in again.");
   const familyId = randomUUID();
   const refreshToken = generateRefreshToken();
@@ -48,22 +48,22 @@ export async function rotateRefreshToken(token: string): Promise<AuthTokens> {
     await lockFamily(tx, found.familyId);
     const current = await tx.refreshToken.findUnique({
       where: { tokenHash },
-      include: { user: { select: { id: true, role: true } } },
+      include: { user: { select: { id: true, role: true, status: true } } },
     });
     const now = new Date();
     if (!current) return null;
-    if (current.usedAt || current.revokedAt || current.expiresAt <= now) {
-      await tx.refreshToken.updateMany({ where: { familyId: current.familyId, revokedAt: null }, data: { revokedAt: now } });
+    if (!current.status || !current.user.status || current.usedAt || current.revokedAt || current.expiresAt <= now) {
+      await tx.refreshToken.updateMany({ where: { familyId: current.familyId, revokedAt: null }, data: { revokedAt: now, status: false } });
       return null;
     }
 
     // A conditional update ensures only one concurrent request consumes this token.
     const consumed = await tx.refreshToken.updateMany({
-      where: { id: current.id, usedAt: null, revokedAt: null, expiresAt: { gt: now } },
-      data: { usedAt: now },
+      where: { id: current.id, status: true, usedAt: null, revokedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now, status: false },
     });
     if (consumed.count !== 1) {
-      await tx.refreshToken.updateMany({ where: { familyId: current.familyId, revokedAt: null }, data: { revokedAt: now } });
+      await tx.refreshToken.updateMany({ where: { familyId: current.familyId, revokedAt: null }, data: { revokedAt: now, status: false } });
       return null;
     }
 
@@ -86,6 +86,6 @@ export async function revokeRefreshSession(token: string): Promise<void> {
     const current = await tx.refreshToken.findUnique({ where: { tokenHash: hashRefreshToken(token) }, select: { familyId: true } });
     if (!current) return;
     await lockFamily(tx, current.familyId);
-    await tx.refreshToken.updateMany({ where: { familyId: current.familyId, revokedAt: null }, data: { revokedAt: new Date() } });
+    await tx.refreshToken.updateMany({ where: { familyId: current.familyId, revokedAt: null }, data: { revokedAt: new Date(), status: false } });
   }, { timeout: 10_000 });
 }

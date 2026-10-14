@@ -47,17 +47,10 @@ JSON transport also includes `data.refreshToken`. All responses carry `Cache-Con
 
 Use `issueAuthTokens(user.id)` only after credential verification or validated account creation. For browser login, return only the access token in JSON and use `setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt)` to store the refresh token. For native login, return both tokens in JSON. Use `revokeRefreshSession(token)` in a future logout API, followed by clearing both cookies for browsers.
 
-Auth helpers require the Node.js runtime and are server-only. `npm run test:auth` checks JWT/refresh utilities; `npm run test:auth:db` exercises session rotation and replay against the configured database with temporary test users that are cleaned up afterwards.
+Auth helpers require the Node.js runtime and are server-only.
 
 Sources: [jose JWT library](https://github.com/panva/jose) and [refresh token rotation](https://oauth.net/2/grant-types/refresh-token/).
 
-To check the running HTTP route locally:
-
-```bash
-/Users/manku/.local/bin/postman request POST http://localhost:3000/api/auth/refresh --script-post-request @tests/postman/refresh-unauthorized.cjs --response-only
-```
-
-This runs four assertions against the expected HTTP 401 error response. This Postman CLI version exits with code 1 for that non-success HTTP status even when all four assertions pass; inspect the assertion results. No workspace upload or credentials are required.
 
 ## Signup and signin contract
 
@@ -71,14 +64,10 @@ Both endpoints return the shared error envelope with HTTP 422 / `VALIDATION_ERRO
 
 The UI shows field validation, loading, and API/network errors. `/home` verifies the access cookie and current user on the server, redirecting unauthenticated visitors to `/signin`. An expired access cookie requires signin or a successful refresh before entering `/home` again.
 
-Check validation/password behavior with `npm run test:credentials` and database-backed routes with `npm run test:credentials:db`. The database test creates and cleans up one temporary account.
 
 Password hashing reference: [OWASP password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
 
-The saved Postman validation assertions are in `tests/postman/credential-validation.cjs`. Use inline JSON with this CLI version: `--body @file` is sent as a multipart upload rather than raw JSON. For example:
 
-```bash
-/Users/manku/.local/bin/postman request POST http://localhost:3000/api/signin -H 'Content-Type:application/json' --body '{"email":"not-an-email","password":""}' --script-post-request @tests/postman/credential-validation.cjs
-```
+## Status flags
 
-The expected response is HTTP 422 with three passing assertions; the CLI exits nonzero for the expected error HTTP status.
+`User.status` and `RefreshToken.status` are Boolean fields defaulting to `true`. Inactive users cannot sign in, receive tokens, refresh sessions, or pass protected page/API guards. Consuming or revoking a refresh token sets its status to `false`; its replacement starts active. Existing consumed, revoked, and expired token records are marked inactive by the migration. Status is checked alongside expiry and revocation timestamps.

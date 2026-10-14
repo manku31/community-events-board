@@ -11,9 +11,10 @@ datasource db {
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
-  // Store a password hash in this field when signup is implemented.
+  // Store the password hash, never plaintext.
   password      String
   role          String
+  status        Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
@@ -24,6 +25,7 @@ model RefreshToken {
   tokenHash String    @unique
   familyId  String    @db.Uuid
   userId    Int
+  status    Boolean   @default(true)
   expiresAt DateTime
   usedAt    DateTime?
   revokedAt DateTime?

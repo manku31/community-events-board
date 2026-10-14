@@ -25,7 +25,7 @@ export async function signupWithPassword(email: string, password: string) {
 
 export async function signinWithPassword(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!(await verifyPassword(password, user?.password)) || !user) {
+  if (!(await verifyPassword(password, user?.password)) || !user || !user.status) {
     throw new ApiError(401, "INVALID_CREDENTIALS", "Email or password is incorrect.");
   }
   const tokens = await issueAuthTokens(user.id);

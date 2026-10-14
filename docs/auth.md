@@ -45,7 +45,7 @@ JSON transport also includes `data.refreshToken`. All responses carry `Cache-Con
 
 ## Server integration
 
-Use `issueAuthTokens(user.id)` only after credential verification or validated account creation. For browser login, return only the access token in JSON and use `setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt)` to store the refresh token. For native login, return both tokens in JSON. Use `revokeRefreshSession(token)` in a future logout API, followed by clearing both cookies for browsers.
+Use `issueAuthTokens(user)` with the active database user already loaded during credential verification or validated account creation. Never pass client-supplied identity or role data. For browser login, return only the access token in JSON and use `setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt)` to store the refresh token. For native login, return both tokens in JSON. Use `revokeRefreshSession(token)` in a future logout API, followed by clearing both cookies for browsers.
 
 Auth helpers require the Node.js runtime and are server-only.
 
@@ -75,3 +75,7 @@ Password hashing reference: [OWASP password storage guidance](https://cheatsheet
 ## Guest pages
 
 The landing page (`/`), signin page (`/signin`), and signup page (`/signup`) use a shared server-side guard. A valid access cookie for an active user redirects to `/home` before guest content is displayed. Missing, expired, invalid, or inactive sessions can access these pages to sign in. The check uses the signed cookie and current database user, rather than trusting client storage.
+
+## Authentication request efficiency
+
+Token issuance reuses the user loaded by signin or created by signup, removing a duplicate user query from both flows. Signin selects only the fields it needs. Successful authentication uses one fresh navigation to `/home` to apply the new cookies without a separate router refresh. Password hashing settings are retained. The connection pool keeps idle connections for two minutes to reduce repeated connection setup during short pauses. Restart the dev server to apply pool-setting changes.

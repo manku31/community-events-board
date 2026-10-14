@@ -25,10 +25,12 @@ async function lockFamily(tx: Prisma.TransactionClient, familyId: string) {
   await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtextextended(${familyId}, 0))`;
 }
 
-// Call only after checking credentials or creating a validated account.
-export async function issueAuthTokens(userId: number, db: Prisma.TransactionClient = prisma): Promise<AuthTokens> {
-  const user = await db.user.findUnique({ where: { id: userId, status: true }, select: { id: true, role: true } });
-  if (!user) throw new ApiError(401, "UNAUTHORIZED", "Please sign in again.");
+// Pass the active database user already loaded during credential verification.
+export async function issueAuthTokens(
+  user: { id: number; role: string; status: boolean },
+  db: Prisma.TransactionClient = prisma,
+): Promise<AuthTokens> {
+  if (!user.status) throw new ApiError(401, "UNAUTHORIZED", "Please sign in again.");
   const familyId = randomUUID();
   const refreshToken = generateRefreshToken();
   const refreshExpiresAt = new Date(Date.now() + REFRESH_TOKEN_SECONDS * 1000);

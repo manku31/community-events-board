@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Eye, EyeOff, LoaderCircle, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import { authFieldErrors, signinSchema, signupFormSchema } from "@/lib/validatio
 
 export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   const isSignup = mode === "signup";
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
   const [email, setEmail] = useState("");
@@ -67,8 +65,8 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       storeAccessToken(body.data.accessToken);
       setPassword("");
       setConfirmPassword("");
-      router.replace("/home");
-      router.refresh();
+      // Start the new session with one fresh navigation and no stale router cache.
+      window.location.replace("/home");
     } catch {
       setMessage("We couldn’t connect. Please check your connection and try again.");
     } finally {

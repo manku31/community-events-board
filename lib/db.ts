@@ -23,7 +23,8 @@ function createPrismaClient() {
       connectionString,
       max: 5,
       connectionTimeoutMillis: 20_000,
-      idleTimeoutMillis: 30_000,
+      // Reuse established connections across short pauses between requests.
+      idleTimeoutMillis: 120_000,
       statement_timeout: 15_000,
     },
     { schema: databaseUrl.searchParams.get("schema") ?? "public" },

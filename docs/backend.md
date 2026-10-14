@@ -2,7 +2,7 @@
 
 Prisma ORM 7 connects to Neon PostgreSQL using the PostgreSQL driver adapter. The shared client in `lib/db.ts` is restricted to server code and reuses its connection pool during development. It reads `DATABASE_URL` from the environment; Next.js loads `.env` automatically, and the standalone scripts load it with dotenv.
 
-The schema contains a `User` model with an auto-incrementing integer `id`, unique `email`, `password` string for the password hash, and a string `role` that defaults to `user`. `createdAt` defaults to the creation time, and Prisma maintains `updatedAt` on updates. The initial migration creates this table; signup and login APIs will be implemented separately.
+The schema contains a `User` model with an auto-incrementing integer `id`, unique `email`, `password` string for the password hash, and a required string `role`. `createdAt` defaults to the creation time, and Prisma maintains `updatedAt` on updates. The initial migration creates this table; signup and login APIs will be implemented separately.
 
 ## Local setup
 
@@ -30,7 +30,7 @@ Prisma Client is generated into `generated/prisma` and is ignored by Git. Genera
 
 ## JSON response contract
 
-Future APIs use `lib/api` to return native JSON `Response` objects. This step adds helpers only; no feature API routes have been added.
+Future APIs use `lib/api` to return native JSON `Response` objects. The refresh API uses these helpers. See [token authentication](auth.md) for its contract and integration instructions.
 
 Success responses contain `success`, `message`, and `data`. Optional `meta` holds pagination or similar information. The default HTTP status is 200; use 201 for creation.
 
@@ -79,3 +79,7 @@ export async function GET() {
 Clients should check the HTTP status and narrow `ApiResponse<T>` using `success` before reading `data` or `error`. A 204/205 response cannot carry this JSON envelope; the success helper rejects those statuses.
 
 Reference: [Prisma PostgreSQL setup](https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/postgresql) and [Neon connection guidance](https://neon.com/docs/guides/prisma).
+
+## Authentication
+
+JWT access tokens and rotating refresh sessions are configured. See [token authentication](auth.md) for the API contract, server helpers, and verification commands.

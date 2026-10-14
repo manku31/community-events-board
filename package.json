@@ -14,7 +14,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "test:api": "node --import tsx --test tests/api-response.test.ts"
+    "test:api": "node --import tsx --test tests/api-response.test.ts",
+    "test:auth": "node --conditions=react-server --import tsx --test tests/auth.test.ts",
+    "test:auth:db": "node --conditions=react-server --import tsx --test tests/auth-db.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -23,6 +25,7 @@
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "dotenv": "^18.0.8",
+    "jose": "^6.2.12",
     "lucide-react": "^1.57.0",
     "next": "16.4.0",
     "pg": "^8.23.1",

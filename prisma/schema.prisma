@@ -8,4 +8,12 @@ datasource db {
   provider = "postgresql"
 }
 
-// Add application models here as each backend feature is implemented.
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  // Store a password hash in this field when signup is implemented.
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

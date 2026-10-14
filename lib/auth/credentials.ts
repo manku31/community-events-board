@@ -5,15 +5,15 @@ import { prisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "./password";
 import { issueAuthTokens } from "./session";
 
-const authUserSelect = { id: true, email: true, role: true, status: true } as const;
+const authUserSelect = { id: true, name: true, email: true, role: true, status: true } as const;
 
-export async function signupWithPassword(email: string, password: string) {
+export async function signupWithPassword(name: string, email: string, password: string) {
   const hashed = await hashPassword(password);
   try {
     return await prisma.$transaction(async tx => {
-      const user = await tx.user.create({ data: { email, password: hashed, role: "user" }, select: authUserSelect });
+      const user = await tx.user.create({ data: { name, email, password: hashed, role: "user" }, select: authUserSelect });
       const tokens = await issueAuthTokens(user, tx);
-      return { user: { id: user.id, email: user.email, role: user.role }, tokens };
+      return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, tokens };
     }, { timeout: 20_000 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -29,5 +29,5 @@ export async function signinWithPassword(email: string, password: string) {
     throw new ApiError(401, "INVALID_CREDENTIALS", "Email or password is incorrect.");
   }
   const tokens = await issueAuthTokens(user);
-  return { user: { id: user.id, email: user.email, role: user.role }, tokens };
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, tokens };
 }

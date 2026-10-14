@@ -13,6 +13,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   const isSignup = mode === "signup";
   const formRef = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -29,7 +30,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
 
   function showErrors(errors: FieldErrors) {
     setFieldErrors(errors);
-    const firstField = ["email", "password", "confirmPassword"].find(field => errors[field]?.length);
+    const firstField = ["name", "email", "password", "confirmPassword"].find(field => errors[field]?.length);
     const input = firstField && formRef.current?.elements.namedItem(firstField);
     if (input instanceof HTMLInputElement) input.focus();
   }
@@ -38,7 +39,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
     event.preventDefault();
     if (submitting.current) return;
     setMessage("");
-    const values = isSignup ? { email, password, confirmPassword } : { email, password };
+    const values = isSignup ? { name, email, password, confirmPassword } : { email, password };
     const parsed = (isSignup ? signupFormSchema : signinSchema).safeParse(values);
     if (!parsed.success) {
       showErrors(authFieldErrors(parsed.error));
@@ -89,6 +90,13 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       <p className="mt-3 text-sm leading-7 text-[#6c5c70]">{isSignup ? "Create an account and find more of what makes you happy." : "Sign in to find your favourites and make a few new plans."}</p>
 
       <form ref={formRef} className="mt-6 space-y-5 sm:mt-8" onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
+        {isSignup && (
+          <div>
+            <label htmlFor="name" className="text-sm font-semibold">Name</label>
+            <input id="name" name="name" type="text" autoComplete="name" placeholder="Your name" required maxLength={100} disabled={isSubmitting} aria-invalid={Boolean(fieldErrors.name?.length)} aria-describedby={fieldErrors.name?.length ? "name-error" : undefined} className={inputClassName} value={name} onChange={event => { setName(event.target.value); clearError("name"); }} />
+            {fieldError("name")}
+          </div>
+        )}
         <div>
           <label htmlFor="email" className="text-sm font-semibold">Email address</label>
           <input id="email" name="email" type="email" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} placeholder="you@example.com" required maxLength={254} disabled={isSubmitting} aria-invalid={Boolean(fieldErrors.email?.length)} aria-describedby={fieldErrors.email?.length ? "email-error" : undefined} className={inputClassName} value={email} onChange={event => { setEmail(event.target.value); clearError("email"); }} />

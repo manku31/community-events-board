@@ -6,6 +6,7 @@ const client = z.enum(["browser", "native"]).default("browser");
 
 export const signinSchema = z.strictObject({ email, password, client });
 export const signupSchema = z.strictObject({
+  name: z.string().trim().min(1, "Enter your name.").max(100, "Use no more than 100 characters for your name."),
   email,
   password: password.min(8, "Use at least 8 characters for your password."),
   confirmPassword: z.string().optional(),

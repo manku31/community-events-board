@@ -1,6 +1,6 @@
 # Token authentication
 
-The sign-up and sign-in forms call `POST /api/signup` and `POST /api/signin`. Both return JWT access tokens and a safe user profile. Signup creates an account and signs the user in; both flows redirect to the server-protected `/home` page. The greeting uses the email address before `@` because the User schema has no separate name field.
+The sign-up and sign-in forms call `POST /api/signup` and `POST /api/signin`. Both return JWT access tokens and a safe user profile. Signup creates an account and signs the user in; both flows redirect to the server-protected `/home` page. The greeting uses the saved user name. Existing accounts are backfilled with the email address before `@`.
 
 ## Access tokens
 
@@ -8,7 +8,7 @@ JWT access tokens use HS256 and the existing private `JWT_SECRET` (at least 32 b
 
 ## Refresh sessions
 
-Refresh tokens are random 32-byte opaque strings, not JWTs. Only SHA-256 hashes are saved in PostgreSQL. A session lasts at most 30 days from issuance. A transaction-scoped PostgreSQL advisory lock serializes operations within each session. Each successful refresh consumes the old token atomically and creates a new one with the same session ID and original expiry. Reusing a consumed token revokes the entire session, including its latest refresh token. Concurrent requests must be avoided by clients; duplicate refreshes are treated as reuse. A revocation helper is available for the future logout API.
+Refresh tokens are random 32-byte opaque strings, not JWTs. Only SHA-256 hashes are saved in PostgreSQL. A session lasts at most 30 days from issuance. A transaction-scoped PostgreSQL advisory lock serializes operations within each session. Each successful refresh consumes the old token atomically and creates a new one with the same session ID and original expiry. Reusing a consumed token revokes the entire session, including its latest refresh token. Concurrent requests must be avoided by clients; duplicate refreshes are treated as reuse. The logout API uses the revocation helper to end the current refresh session.
 
 Already issued access tokens remain valid until their 15-minute expiry after refresh-session revocation. Never log tokens or return the User password field.
 
@@ -45,7 +45,7 @@ JSON transport also includes `data.refreshToken`. All responses carry `Cache-Con
 
 ## Server integration
 
-Use `issueAuthTokens(user)` with the active database user already loaded during credential verification or validated account creation. Never pass client-supplied identity or role data. For browser login, return only the access token in JSON and use `setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt)` to store the refresh token. For native login, return both tokens in JSON. Use `revokeRefreshSession(token)` in a future logout API, followed by clearing both cookies for browsers.
+Use `issueAuthTokens(user)` with the active database user already loaded during credential verification or validated account creation. Never pass client-supplied identity or role data. For browser login, return only the access token in JSON and use `setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt)` to store the refresh token. For native login, return both tokens in JSON. `POST /api/auth/logout` revokes the refresh session and clears both browser cookies.
 
 Auth helpers require the Node.js runtime and are server-only.
 
@@ -54,11 +54,11 @@ Sources: [jose JWT library](https://github.com/panva/jose) and [refresh token ro
 
 ## Signup and signin contract
 
-`POST /api/signup` takes JSON `{ "email": "person@example.com", "password": "a long password", "confirmPassword": "a long password" }`. Confirmation is optional for API clients but required by the signup UI; if supplied, it must match. `POST /api/signin` takes JSON `{ "email": "person@example.com", "password": "a long password" }`.
+`POST /api/signup` takes JSON `{ "name": "Person", "email": "person@example.com", "password": "a long password", "confirmPassword": "a long password" }`. Confirmation is optional for API clients but required by the signup UI; if supplied, it must match. `POST /api/signin` takes JSON `{ "email": "person@example.com", "password": "a long password" }`.
 
-Email is trimmed, validated, limited to 254 characters, and lowercased. Signup passwords require 8–128 characters; signin requires a nonempty password of at most 128 characters. Password whitespace is preserved. Unknown fields, including client-supplied roles, are rejected. All new accounts get role `user`. Passwords use salted scrypt with N=2^17, r=8, p=1, and are never returned.
+Name is required, trimmed, and limited to 1–100 characters. Email is trimmed, validated, limited to 254 characters, and lowercased. Signup passwords require 8–128 characters; signin requires a nonempty password of at most 128 characters. Password whitespace is preserved. Unknown fields, including client-supplied roles, are rejected. All new accounts get role `user`. Passwords use salted scrypt with N=2^17, r=8, p=1, and are never returned.
 
-Responses are HTTP 201 for signup and 200 for signin, with `data.user` (`id`, `email`, `role`), `data.accessToken`, `data.tokenType`, and `data.expiresIn`. For browsers, the default `client` is `browser`, and refresh tokens are provided only in the HttpOnly cookie. Native clients may add `"client": "native"` to receive `data.refreshToken` instead of cookies.
+Responses are HTTP 201 for signup and 200 for signin, with `data.user` (`id`, `name`, `email`, `role`), `data.accessToken`, `data.tokenType`, and `data.expiresIn`. For browsers, the default `client` is `browser`, and refresh tokens are provided only in the HttpOnly cookie. Native clients may add `"client": "native"` to receive `data.refreshToken` instead of cookies.
 
 Both endpoints return the shared error envelope with HTTP 422 / `VALIDATION_ERROR` and field details for invalid input. Signup returns HTTP 409 / `EMAIL_IN_USE` for duplicate email. Signin returns HTTP 401 / `INVALID_CREDENTIALS` with the same message for unknown email and incorrect password. Invalid JSON returns 400; non-JSON bodies return 415. Cross-origin browser requests are rejected with 403. Every response uses `Cache-Control: no-store`.
 
@@ -79,3 +79,11 @@ The landing page (`/`), signin page (`/signin`), and signup page (`/signup`) use
 ## Authentication request efficiency
 
 Token issuance reuses the user loaded by signin or created by signup, removing a duplicate user query from both flows. Signin selects only the fields it needs. Successful authentication uses one fresh navigation to `/home` to apply the new cookies without a separate router refresh. Password hashing settings are retained. The connection pool keeps idle connections for two minutes to reduce repeated connection setup during short pauses. Restart the dev server to apply pool-setting changes.
+
+## Logout
+
+The signed-in header has a user-icon dropdown containing My profile and Log out. The logout menu item that calls `POST /api/auth/logout` with the refresh cookie and same-origin Origin header. Successful logout revokes the session, marks its refresh tokens inactive, clears both HttpOnly cookies, removes the client access token from session storage and memory, and returns the browser to `/`. Missing cookies also return success. Failures keep the current session and show a retry message. The JSON response uses the shared envelope with HTTP 200, `data: null`, and message `Logged out`; it is not cached. As documented above, copies of previously issued bearer access tokens expire after 15 minutes.
+
+## Profile
+
+The user menu opens `/profile`, which verifies the access cookie and active user on the server. It shows the signed-in user’s name, email, account ID, role, status, creation date, and last-updated date. Passwords and tokens are not loaded into the profile. The page is read-only and includes a link back to `/home`.

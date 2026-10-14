@@ -13,3 +13,10 @@ export function storeAccessToken(token: string): void {
 export function getAccessToken(): string | null {
   try { return window.sessionStorage.getItem(ACCESS_TOKEN_KEY) ?? memoryToken; } catch { return memoryToken; }
 }
+
+export function clearAccessToken(): void {
+  memoryToken = null;
+  try { window.sessionStorage.removeItem(ACCESS_TOKEN_KEY); } catch {
+    // Storage may be blocked; the in-memory token has still been cleared.
+  }
+}

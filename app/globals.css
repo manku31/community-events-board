@@ -128,3 +128,73 @@
     @apply font-sans;
   }
 }
+
+/* A warm account icon and a contained, gently expanding account menu. */
+.user-island-trigger {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f0c9b7;
+  border-radius: 16px;
+  background: #ffe5d6;
+  color: #a3372c;
+  box-shadow: 0 3px 0 #f4ddd2;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.user-island-trigger:hover,
+.user-island-trigger[data-open="true"] {
+  background: #ffddc8;
+  border-color: #e8b59d;
+}
+
+.user-island-avatar {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-island-panel {
+  box-sizing: border-box;
+  width: min(272px, calc(100vw - 32px));
+  max-height: min(420px, var(--available-height, calc(100dvh - 32px)));
+  padding: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid #e4d8ed;
+  border-radius: 24px;
+  background: white;
+  color: var(--foreground);
+  box-shadow: 0 12px 32px -12px #59416d30, 0 4px 12px -6px #30243b15;
+  transform-origin: var(--transform-origin, top right);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 180ms ease, transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.user-island-panel[data-starting-style],
+.user-island-panel[data-ending-style] {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.user-island-panel[data-ending-style] {
+  transition-duration: 160ms;
+}
+
+.user-island-content {
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-island-trigger,
+  .user-island-avatar,
+  .user-island-panel {
+    transition: none;
+  }
+}

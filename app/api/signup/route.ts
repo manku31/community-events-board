@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
   try {
     const parsed = signupSchema.safeParse(await readAuthBody(request));
     if (!parsed.success) throw new ApiError(422, "VALIDATION_ERROR", "Please check your details.", authFieldErrors(parsed.error));
-    const { email, password, client } = parsed.data;
-    const { user, tokens } = await signupWithPassword(email, password);
+    const { name, email, password, client } = parsed.data;
+    const { user, tokens } = await signupWithPassword(name, email, password);
     return authSuccess(user, tokens, client, 201, "Account created");
   } catch (error) { return authFailure(error); }
 }

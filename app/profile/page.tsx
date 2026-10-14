@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api";
 import { ACCESS_COOKIE_NAME } from "@/lib/auth/cookies";
 import { getUserProfileFromAccessToken } from "@/lib/auth/guards";
 import { SiteHeader } from "@/components/site-header";
+import { getUserLandingPath } from "@/lib/auth/landing";
 
 export const metadata: Metadata = { title: "My profile | Community Events Board" };
 
@@ -34,7 +35,7 @@ async function ProfileContent() {
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <SiteHeader user={user} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
-        <Link href="/home" className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium text-secondary-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ArrowLeft className="size-4" aria-hidden="true" /> Back to home</Link>
+        <Link href={getUserLandingPath(user)} className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium text-secondary-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ArrowLeft className="size-4" aria-hidden="true" /> Back to home</Link>
         <section className="overflow-hidden rounded-3xl border border-[#ddcee9] bg-white">
           <div className="flex items-center gap-4 bg-secondary p-6 sm:gap-6 sm:p-8">
             <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white text-secondary-foreground"><UserRound className="size-8" aria-hidden="true" /></span>

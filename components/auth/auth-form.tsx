@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { ApiResponse, FieldErrors } from "@/lib/api/types";
 import type { AuthResult } from "@/lib/auth/types";
 import { storeAccessToken } from "@/lib/auth/client";
+import { getUserLandingPath } from "@/lib/auth/landing";
 import { authFieldErrors, signinSchema, signupFormSchema } from "@/lib/validation/auth";
 
 export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
@@ -67,7 +68,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       setPassword("");
       setConfirmPassword("");
       // Start the new session with one fresh navigation and no stale router cache.
-      window.location.replace("/home");
+      window.location.replace(getUserLandingPath(body.data.user));
     } catch {
       setMessage("We couldn’t connect. Please check your connection and try again.");
     } finally {

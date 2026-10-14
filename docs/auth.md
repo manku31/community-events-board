@@ -1,6 +1,6 @@
 # Token authentication
 
-The sign-up and sign-in forms call `POST /api/signup` and `POST /api/signin`. Both return JWT access tokens and a safe user profile. Signup creates an account and signs the user in; both flows redirect to the server-protected `/home` page. The greeting uses the saved user name. Existing accounts are backfilled with the email address before `@`.
+The sign-up and sign-in forms call `POST /api/signup` and `POST /api/signin`. Both return JWT access tokens and a safe user profile. Signup creates an account and signs the user in. Successful authentication redirects users with role `admin` to `/admin` and other users to `/home`. The greeting uses the saved user name. Existing accounts are backfilled with the email address before `@`.
 
 ## Access tokens
 
@@ -74,7 +74,11 @@ Password hashing reference: [OWASP password storage guidance](https://cheatsheet
 
 ## Guest pages
 
-The landing page (`/`), signin page (`/signin`), and signup page (`/signup`) use a shared server-side guard. A valid access cookie for an active user redirects to `/home` before guest content is displayed. Missing, expired, invalid, or inactive sessions can access these pages to sign in. The check uses the signed cookie and current database user, rather than trusting client storage.
+The landing page (`/`), signin page (`/signin`), and signup page (`/signup`) use a shared server-side guard. A valid access cookie for an active user redirects admins to `/admin` and other users to `/home` before guest content is displayed. Missing, expired, invalid, or inactive sessions can access these pages to sign in. The check uses the signed cookie and current database user, rather than trusting client storage.
+
+## Admin landing page
+
+`/admin` is a simple welcome page with the shared profile/logout menu. The server verifies the access cookie, active account, and current database role before rendering admin content. Guests are redirected to `/signin`; users whose role is not `admin` are redirected to `/home`. Admins visiting `/home` are redirected to `/admin`. Header and profile home links follow the same role-based destination. Signup continues to create only `user` accounts; this change does not create or promote an admin account.
 
 ## Authentication request efficiency
 

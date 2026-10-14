@@ -28,6 +28,7 @@ async function UserLanding() {
     if (error instanceof ApiError && error.status === 401) redirect("/signin");
     throw error;
   }
+  if (user.role === "admin") redirect("/admin");
   const name = user.name || user.email.split("@")[0];
 
   return (

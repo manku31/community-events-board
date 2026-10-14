@@ -2,14 +2,22 @@ import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { SignJWT } from "jose";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "../lib/api";
 import { ACCESS_TOKEN_SECONDS, getJwtKey, TOKEN_AUDIENCE, TOKEN_ISSUER } from "../lib/auth/config";
 import { createAccessToken, verifyAccessToken } from "../lib/auth/jwt";
 import { generateRefreshToken, hashRefreshToken, isRefreshToken } from "../lib/auth/refresh-token";
 import { clearRefreshCookie, setRefreshCookie } from "../lib/auth/cookies";
+import { assertAuthOrigin } from "../lib/auth/origin";
 
 process.env.JWT_SECRET = randomBytes(32).toString("hex");
+
+test("origin checks preserve the original loopback host and reject other origins", () => {
+  const url = "http://127.0.0.1:3000/api/signin";
+  assert.doesNotThrow(() => assertAuthOrigin(new NextRequest(url, { headers: { Host: "127.0.0.1:3000", Origin: "http://127.0.0.1:3000" } }), true));
+  assert.throws(() => assertAuthOrigin(new NextRequest(url, { headers: { Host: "127.0.0.1:3000", Origin: "https://other.example" } })), error => error instanceof ApiError && error.status === 403);
+  assert.throws(() => assertAuthOrigin(new NextRequest(url), true), error => error instanceof ApiError && error.status === 403);
+});
 
 function unauthorized(error: unknown) {
   return error instanceof ApiError && error.status === 401 && error.code === "INVALID_ACCESS_TOKEN";

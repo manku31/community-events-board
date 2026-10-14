@@ -2,7 +2,7 @@
 
 Prisma ORM 7 connects to Neon PostgreSQL using the PostgreSQL driver adapter. The shared client in `lib/db.ts` is restricted to server code and reuses its connection pool during development. It reads `DATABASE_URL` from the environment; Next.js loads `.env` automatically, and the standalone scripts load it with dotenv.
 
-The schema contains a `User` model with an auto-incrementing integer `id`, unique `email`, `password` string for the password hash, and a required string `role`. `createdAt` defaults to the creation time, and Prisma maintains `updatedAt` on updates. The initial migration creates this table; signup and login APIs will be implemented separately.
+The schema contains a `User` model with an auto-incrementing integer `id`, unique `email`, `password` string for the password hash, and a required string `role`. `createdAt` defaults to the creation time, and Prisma maintains `updatedAt` on updates. The initial migration creates this table; signup and signin APIs verify credentials and issue tokens (see the authentication guide).
 
 ## Local setup
 

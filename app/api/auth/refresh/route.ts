@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError, handleApiError, successResponse } from "@/lib/api";
-import { clearRefreshCookie, REFRESH_COOKIE_NAME, setRefreshCookie } from "@/lib/auth/cookies";
+import { clearAccessCookie, clearRefreshCookie, REFRESH_COOKIE_NAME, setAccessCookie, setRefreshCookie } from "@/lib/auth/cookies";
 import { rotateRefreshToken } from "@/lib/auth/session";
+import { assertAuthOrigin } from "@/lib/auth/origin";
 
 function toNextResponse(response: Response) {
   const result = new NextResponse(response.body, { status: response.status, headers: response.headers });
@@ -12,10 +13,7 @@ function toNextResponse(response: Response) {
 export async function POST(request: NextRequest) {
   let cookieTransport = true;
   try {
-    const origin = request.headers.get("origin");
-    if (origin && origin !== request.nextUrl.origin) {
-      throw new ApiError(403, "INVALID_ORIGIN", "This request is not allowed.");
-    }
+    assertAuthOrigin(request);
 
     let refreshToken: string | undefined;
     const contentType = request.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
@@ -35,9 +33,7 @@ export async function POST(request: NextRequest) {
         throw new ApiError(415, "UNSUPPORTED_MEDIA_TYPE", "Use application/json for the request body.");
       }
       refreshToken = request.cookies.get(REFRESH_COOKIE_NAME)?.value;
-      if (refreshToken && origin !== request.nextUrl.origin) {
-        throw new ApiError(403, "INVALID_ORIGIN", "This request is not allowed.");
-      }
+      if (refreshToken) assertAuthOrigin(request, true);
     }
     if (!refreshToken) throw new ApiError(401, "INVALID_REFRESH_TOKEN", "Please sign in again.");
 
@@ -49,11 +45,17 @@ export async function POST(request: NextRequest) {
       ...(!cookieTransport ? { refreshToken: tokens.refreshToken } : {}),
     };
     const response = toNextResponse(successResponse(data, { message: "Session refreshed" }));
-    if (cookieTransport) setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt);
+    if (cookieTransport) {
+      setAccessCookie(response, tokens.accessToken);
+      setRefreshCookie(response, tokens.refreshToken, tokens.refreshExpiresAt);
+    }
     return response;
   } catch (error) {
     const response = toNextResponse(handleApiError(error));
-    if (cookieTransport && response.status === 401) clearRefreshCookie(response);
+    if (cookieTransport && response.status === 401) {
+      clearRefreshCookie(response);
+      clearAccessCookie(response);
+    }
     return response;
   }
 }

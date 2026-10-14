@@ -11,7 +11,7 @@ The schema contains a `User` model with an auto-incrementing integer `id`, uniqu
 3. Run `npm run db:validate` to validate the schema and `npm run db:check` to verify the live connection with a read-only `SELECT 1` query.
 4. Start the app with `npm run dev`.
 
-The connection check does not create or modify any rows or tables, and does not print connection credentials. `lib/db.ts` is for the Node.js server runtime, not Edge or browser code. Use the pooled Neon connection for the application. Before adding migrations, set the optional `DATABASE_URL_UNPOOLED` to the direct Neon connection; Prisma CLI prefers it when present and otherwise uses `DATABASE_URL`.
+The connection check does not create or modify any rows or tables, and does not print connection credentials. `lib/db.ts` is for the Node.js server runtime, not Edge or browser code. Use the pooled Neon connection for the application with `sslmode=verify-full` to explicitly preserve certificate and hostname verification and avoid the PostgreSQL driver’s deprecated SSL-mode warning. Restart the dev server after changing the connection URL, since the shared Prisma client keeps its existing pool during reloads. Before adding migrations, set the optional `DATABASE_URL_UNPOOLED` to the direct Neon connection; Prisma CLI prefers it when present and otherwise uses `DATABASE_URL`.
 
 ## Commands
 

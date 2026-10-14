@@ -71,3 +71,7 @@ Password hashing reference: [OWASP password storage guidance](https://cheatsheet
 ## Status flags
 
 `User.status` and `RefreshToken.status` are Boolean fields defaulting to `true`. Inactive users cannot sign in, receive tokens, refresh sessions, or pass protected page/API guards. Consuming or revoking a refresh token sets its status to `false`; its replacement starts active. Existing consumed, revoked, and expired token records are marked inactive by the migration. Status is checked alongside expiry and revocation timestamps.
+
+## Guest pages
+
+The landing page (`/`), signin page (`/signin`), and signup page (`/signup`) use a shared server-side guard. A valid access cookie for an active user redirects to `/home` before guest content is displayed. Missing, expired, invalid, or inactive sessions can access these pages to sign in. The check uses the signed cookie and current database user, rather than trusting client storage.

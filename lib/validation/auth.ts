@@ -3,10 +3,13 @@ import { z } from "zod";
 const email = z.string().trim().min(1, "Enter your email address.").max(254, "Email address is too long.").pipe(z.email("Enter a valid email address.")).transform(value => value.toLowerCase());
 const password = z.string().min(1, "Enter your password.").max(128, "Use no more than 128 characters.");
 const client = z.enum(["browser", "native"]).default("browser");
+const name = z.string().trim().min(1, "Enter your name.").max(100, "Use no more than 100 characters for your name.");
+
+export const createAdminSchema = z.strictObject({ name, email, password: password.min(8, "Use at least 8 characters for your password.") });
 
 export const signinSchema = z.strictObject({ email, password, client });
 export const signupSchema = z.strictObject({
-  name: z.string().trim().min(1, "Enter your name.").max(100, "Use no more than 100 characters for your name."),
+  name,
   email,
   password: password.min(8, "Use at least 8 characters for your password."),
   confirmPassword: z.string().optional(),

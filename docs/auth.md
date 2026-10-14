@@ -78,6 +78,10 @@ The landing page (`/`), signin page (`/signin`), and signup page (`/signup`) use
 
 ## Admin landing page
 
+The admin All events page includes **Add user** beside **Add event**. Its modal sends `POST /api/admin/users` with JSON `{ "name": "New admin", "email": "admin@example.com", "password": "a long password" }`. Name and email follow signup validation; passwords require 8–128 characters. Unknown fields (including role) are rejected. This endpoint always creates an active account with role `admin`, hashes the password, and returns HTTP 201 with `data.user` (`id`, `name`, `email`, `role`). It does not issue tokens or replace the current session.
+
+Authentication uses either a Bearer access token for API clients or the browser access cookie with a required matching Origin. The server checks the current active account and its database role. Unauthenticated requests return 401, non-admin requests return 403, invalid fields return 422, and duplicate emails return 409. Responses use the shared JSON envelope and `Cache-Control: no-store`. The modal shows field errors, loading, and a success confirmation.
+
 `/admin` is a simple welcome page with the shared profile/logout menu. The server verifies the access cookie, active account, and current database role before rendering admin content. Guests are redirected to `/signin`; users whose role is not `admin` are redirected to `/home`. Admins visiting `/home` are redirected to `/admin`. Header and profile home links follow the same role-based destination. Signup continues to create only `user` accounts; this change does not create or promote an admin account.
 
 ## Authentication request efficiency

@@ -1,19 +1,7 @@
 import "server-only";
-import type { NextRequest } from "next/server";
 import { ApiError } from "@/lib/api";
-import { ACCESS_COOKIE_NAME } from "@/lib/auth/cookies";
-import { getUserFromAccessToken, requireAdmin } from "@/lib/auth/guards";
-import { assertAuthOrigin } from "@/lib/auth/origin";
 import { authFailure } from "@/lib/auth/http";
-
-export async function authorizeCategoryRequest(request: NextRequest) {
-  const bearer = request.headers.has("authorization");
-  assertAuthOrigin(request, !bearer && request.method !== "GET");
-  if (bearer) return requireAdmin(request);
-  const user = await getUserFromAccessToken(request.cookies.get(ACCESS_COOKIE_NAME)?.value);
-  if (user.role !== "admin") throw new ApiError(403, "FORBIDDEN", "Admin access is required.");
-  return user;
-}
+export { authorizeAdminRequest as authorizeCategoryRequest } from "@/lib/auth/admin-request";
 
 export function categoryFailure(error: unknown, operation: "list" | "create" | "update") {
   if (!(error instanceof ApiError)) {

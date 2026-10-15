@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { CalendarDays, Clock3, ImageIcon, MapPin, Sparkles } from "lucide-react";
 
 export type EventPreviewValues = { title: string; category: string; city: string; date: string; time: string; price: string; description: string; imageUrl: string; status: string };
@@ -16,6 +16,34 @@ function PreviewImage({ url }: { url: string }) {
         <div aria-hidden="true" className="absolute -top-14 -right-12 size-48 rounded-full bg-[#d9c4e4]" /><div aria-hidden="true" className="absolute -bottom-16 -left-10 size-52 rounded-full border-[30px] border-[#f7e8c7]" />
         <div className="relative max-w-64 px-5 text-center text-secondary-foreground"><span className="mx-auto flex size-16 -rotate-6 items-center justify-center rounded-[1.3rem] border border-white/80 bg-white/65 shadow-[0_5px_0_#cdb9d9]"><ImageIcon className="size-7" strokeWidth={1.5} aria-hidden="true" /></span><p className="mt-5 text-lg font-semibold tracking-tight">Picture the good times.</p><p className="mt-2 text-xs leading-6">{failed ? "Couldn’t load this image. Try another URL." : "Add your cover image to set the scene."}</p></div>
       </>}
+    </div>
+  );
+}
+
+function PreviewDescription({ description }: { description: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const paragraph = useRef<HTMLParagraphElement>(null);
+  const id = useId();
+  const text = description.trim() || "Tell people a little about the experience. Your description will appear here.";
+
+  useEffect(() => {
+    const element = paragraph.current;
+    if (!element) return;
+    const measure = () => {
+      const lineHeight = Number.parseFloat(getComputedStyle(element).lineHeight);
+      setOverflows(element.scrollHeight > lineHeight * 3 + 1);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [text]);
+
+  return (
+    <div className="mt-5">
+      <p ref={paragraph} id={id} className={`whitespace-pre-wrap text-sm leading-7 text-[#756477] wrap-anywhere ${expanded ? "" : "line-clamp-3"}`}>{text}</p>
+      {overflows && <button type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setExpanded(current => !current)} className="mt-1 inline-flex min-h-11 items-center rounded-lg px-1 text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{expanded ? "Show less" : "… Show more"}</button>}
     </div>
   );
 }
@@ -41,7 +69,7 @@ export function EventPreview({ values }: { values: EventPreviewValues }) {
             <div className="flex items-start gap-2"><dt><span className="sr-only">Date</span><CalendarDays className="mt-1 size-4" aria-hidden="true" /></dt><dd className="min-w-0">{dateLabel}</dd></div>
             <div className="flex items-start gap-2"><dt><span className="sr-only">Time</span><Clock3 className="mt-1 size-4" aria-hidden="true" /></dt><dd className="min-w-0">{timeLabel}{values.time ? " IST" : ""}</dd></div>
           </dl>
-          <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#756477] wrap-anywhere">{values.description.trim() || "Tell people a little about the experience. Your description will appear here."}</p>
+          <PreviewDescription description={values.description} />
           <div className="relative -mx-5 mt-6 flex items-center justify-between gap-3 border-t border-dashed border-[#dfd4df] px-5 pt-5 sm:-mx-6 sm:px-6"><span aria-hidden="true" className="absolute top-0 left-0 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f0e9f3]" /><span aria-hidden="true" className="absolute top-0 right-0 size-5 translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f0e9f3]" /><div><p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-[#8b798b]">Your way in</p><p className="text-lg font-bold text-primary">{priceLabel}</p></div><span className="flex size-10 items-center justify-center rounded-2xl bg-accent text-accent-foreground"><Sparkles className="size-5" aria-hidden="true" /></span></div>
         </div>
       </article>

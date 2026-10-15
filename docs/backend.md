@@ -27,6 +27,12 @@ The connection check does not create or modify any rows or tables, and does not 
 
 Prisma Client is generated into `generated/prisma` and is ignored by Git. Generation also runs after installation and before builds. Generation can run without database credentials; actual database queries require `DATABASE_URL`.
 
+## Dummy data
+
+Run `npm run db:seed` to populate demo categories and events. The script ensures Music, Workshop, Food, Sports, Kids, Art, Theatre, and Wellness exist, reusing existing names case-insensitively without changing their status. Newly created Theatre is inactive; other new categories are active. It adds 15 demo events across Coimbatore, Chennai, Bengaluru, Madurai, and Kochi: 13 upcoming and 2 past, with active/inactive states, free/paid prices, a fractional price, and a ₹1,50,000 group package. Dates are relative to the first seed run using the Indian calendar date. Images use placeholder URLs.
+
+All inserted descriptions start with `Demo event: `. Reruns skip matching seeded event titles rather than duplicating or overwriting records; they do not move existing dates forward. Existing users, sessions, categories, and events are preserved. The seed runs in one transaction with an advisory lock to prevent duplicate concurrent seed runs. This command writes dummy data; it is not a test runner.
+
 ## JSON response contract
 
 Future APIs use `lib/api` to return native JSON `Response` objects. The refresh API uses these helpers. See [token authentication](auth.md) for its contract and integration instructions.

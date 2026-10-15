@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { ApiError } from "@/lib/api";
 import { ACCESS_COOKIE_NAME } from "@/lib/auth/cookies";
 import { getUserFromAccessToken } from "@/lib/auth/guards";
+import { AdminPageSkeleton, type AdminLoadingVariant } from "@/components/admin/loading-skeletons";
 
 async function ProtectedAdminShell({ children }: { children: ReactNode }) {
   const token = (await cookies()).get(ACCESS_COOKIE_NAME)?.value;
@@ -24,6 +25,6 @@ async function ProtectedAdminShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function AdminShell({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<main className="flex min-h-dvh items-center justify-center bg-background px-4"><p role="status">Getting your admin space ready…</p></main>}><ProtectedAdminShell>{children}</ProtectedAdminShell></Suspense>;
+export function AdminShell({ children, loadingVariant = "events" }: { children: ReactNode; loadingVariant?: AdminLoadingVariant }) {
+  return <Suspense fallback={<AdminPageSkeleton variant={loadingVariant} />}><ProtectedAdminShell>{children}</ProtectedAdminShell></Suspense>;
 }

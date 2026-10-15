@@ -2,16 +2,20 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, ChevronDown, LoaderCircle, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, ChevronDown, LoaderCircle, Pencil, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EventPreview, type EventPreviewValues } from "@/components/admin/event-preview";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 import type { ApiResponse, FieldErrors } from "@/lib/api/types";
+import type { EventRecord } from "@/lib/events/types";
 import type { Category } from "@/lib/categories/types";
 import { createEventSchema } from "@/lib/validation/event";
 import { authFieldErrors } from "@/lib/validation/auth";
 
-export function EventForm() {
+export function EventForm({ initial }: { initial?: EventRecord }) {
+  const isEdit = Boolean(initial);
+  const [categoryId, setCategoryId] = useState(initial ? String(initial.categoryId) : "");
   const { confirm, confirmationDialog } = useConfirmation();
   const formRef = useRef<HTMLFormElement>(null);
   const pending = useRef(false);
@@ -22,7 +26,7 @@ export function EventForm() {
   const [categoriesError, setCategoriesError] = useState("");
   const categoryRequest = useRef<AbortController | null>(null);
   const [message, setMessage] = useState("");
-  const [preview, setPreview] = useState<EventPreviewValues>({ title: "", category: "", city: "", date: "", time: "", price: "", description: "", imageUrl: "", status: "active" });
+  const [preview, setPreview] = useState<EventPreviewValues>({ title: initial?.title ?? "", category: initial?.category.category ?? "", city: initial?.city ?? "", date: initial?.date ?? "", time: initial?.time ?? "", price: initial?.price ?? "", description: initial?.description ?? "", imageUrl: initial?.image ?? "", status: initial?.status === false ? "inactive" : "active" });
   const inputClass = "mt-2 min-h-12 w-full min-w-0 rounded-2xl border border-[#dfd4df] bg-white px-4 py-3 text-base outline-none placeholder:text-[#9a8a9d] focus:border-primary focus:ring-3 focus:ring-primary/10 aria-invalid:border-destructive disabled:opacity-60";
 
   const loadCategories = useCallback(async () => {
@@ -35,10 +39,10 @@ export function EventForm() {
       const body: ApiResponse<{ categories: Category[] }> = await response.json();
       if (controller.signal.aborted) return;
       if (!response.ok || !body.success) { setCategoriesError(!body.success ? body.error.message : "Couldn’t load categories."); return; }
-      setCategories(body.data.categories.filter(category => category.status));
+      setCategories(body.data.categories.filter(category => category.status || category.id === initial?.categoryId));
     } catch { if (!controller.signal.aborted) setCategoriesError("Couldn’t load categories. Please try again."); }
     finally { if (!controller.signal.aborted) setCategoriesLoading(false); }
-  }, []);
+  }, [initial?.categoryId]);
 
   useEffect(() => { void loadCategories(); return () => categoryRequest.current?.abort(); }, [loadCategories]);
 
@@ -70,18 +74,19 @@ export function EventForm() {
       return;
     }
     pending.current = true;
+    if (initial && !await confirm({ description: `Save your changes to “${initial.title}”?` })) { pending.current = false; return; }
     setIsSubmitting(true); setFieldErrors({});
     let saved = false;
     try {
-      const response = await fetch("/api/admin/events", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
+      const response = await fetch(initial ? `/api/admin/events/${initial.id}` : "/api/admin/events", { method: initial ? "PATCH" : "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
       const body: ApiResponse<{ event: { id: number } }> = await response.json();
       if (!response.ok || !body.success) {
         if (!body.success) { if (body.error.details) showErrors(body.error.details); setMessage(body.error.message); }
-        else setMessage("Couldn’t create the event. Please try again.");
+        else setMessage("Couldn’t save the event. Please try again.");
         return;
       }
       saved = true;
-      window.location.replace("/admin");
+      window.location.replace(initial ? `/admin/event/${initial.id}` : "/admin");
     } catch { setMessage("Couldn’t connect. Please check your connection and try again."); }
     finally { if (!saved) { pending.current = false; setIsSubmitting(false); } }
   }
@@ -111,8 +116,8 @@ export function EventForm() {
   return (
     <>
       <Link href="/admin" className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl text-sm font-medium text-secondary-foreground hover:underline focus-visible:outline-2 focus-visible:outline-primary"><ArrowLeft className="size-4" aria-hidden="true" /> All events</Link>
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Add event</h1>
-      <p className="mt-3 text-sm leading-7 text-[#756477]">Give your community something to look forward to.</p>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{isEdit ? "Edit event" : "Add event"}</h1>
+      <p className="mt-3 text-sm leading-7 text-[#756477]">{isEdit ? "Update the details and see your changes in the preview." : "Give your community something to look forward to."}</p>
       <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-10">
       <form ref={formRef} noValidate aria-busy={isSubmitting} onSubmit={submit} onChange={updatePreview} className="min-w-0 overflow-hidden rounded-3xl border border-[#eadfd8] bg-white">
         <div className="flex items-center gap-3 border-b border-[#eadfd8] bg-secondary/50 px-5 py-5 sm:px-8">
@@ -121,14 +126,14 @@ export function EventForm() {
         </div>
         <fieldset disabled={isSubmitting} className="min-w-0 space-y-7 p-5 sm:p-8">
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2"><label htmlFor="event-title" className="text-sm font-semibold">Event title</label><input id="event-title" name="title" aria-invalid={Boolean(fieldErrors.title?.length)} aria-describedby={fieldErrors.title?.length ? "event-title-error" : undefined} required maxLength={200} placeholder="e.g. Under the stars: music night" className={inputClass} />{fieldError("title")}</div>
-            <div><label htmlFor="event-category" className="text-sm font-semibold">Category</label><div className="relative mt-2"><select id="event-category" name="categoryId" aria-invalid={Boolean(fieldErrors.categoryId?.length)} aria-describedby={fieldErrors.categoryId?.length ? "event-categoryId-error" : undefined} required defaultValue="" disabled={categoriesLoading || Boolean(categoriesError) || !categories.length} className={`${inputClass.replace("mt-2 ", "")} appearance-none pr-12`}><option value="" disabled>{categoriesLoading ? "Loading categories…" : "Choose a category"}</option>{categories.map(category => <option key={category.id} value={category.id}>{category.category}</option>)}</select><ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-secondary-foreground" /></div>{fieldError("categoryId")}{categoriesError && <div role="alert" className="mt-2 text-sm leading-6 text-destructive">{categoriesError}<button type="button" onClick={() => void loadCategories()} className="ml-2 min-h-11 rounded-lg px-2 font-semibold underline">Retry</button></div>}{!categoriesLoading && !categoriesError && !categories.length && <p className="mt-2 text-sm leading-6 text-secondary-foreground">No active categories yet. <Link href="/admin" className="font-semibold underline">Add or activate one on the admin page</Link> first.</p>}</div>
-            <div><label htmlFor="event-city" className="text-sm font-semibold">City</label><input id="event-city" name="city" aria-invalid={Boolean(fieldErrors.city?.length)} aria-describedby={fieldErrors.city?.length ? "event-city-error" : undefined} required maxLength={100} placeholder="e.g. Coimbatore" className={inputClass} />{fieldError("city")}</div>
-            <div><label htmlFor="event-date" className="text-sm font-semibold">Date</label><input id="event-date" name="date" aria-invalid={Boolean(fieldErrors.date?.length)} aria-describedby={fieldErrors.date?.length ? "event-date-error" : undefined} type="date" required className={inputClass} />{fieldError("date")}</div>
-            <div><label htmlFor="event-time" className="text-sm font-semibold">Time (IST)</label><input id="event-time" name="time" aria-invalid={Boolean(fieldErrors.time?.length)} aria-describedby={fieldErrors.time?.length ? "event-time-error" : undefined} type="time" required className={inputClass} />{fieldError("time")}</div>
-            <div><label htmlFor="event-price" className="text-sm font-semibold">Price (₹)</label><input id="event-price" name="price" aria-invalid={Boolean(fieldErrors.price?.length)} aria-describedby={fieldErrors.price?.length ? "event-price-error" : undefined} type="number" inputMode="decimal" required min="0" step="0.01" placeholder="0" className={inputClass} />{fieldError("price")}<p className="mt-2 text-xs text-[#756477]">Enter 0 for a free event.</p></div>
-            <div><label htmlFor="event-image" className="text-sm font-semibold">Image URL</label><input id="event-image" name="imageUrl" aria-invalid={Boolean(fieldErrors.image?.length)} aria-describedby={fieldErrors.image?.length ? "event-image-error" : undefined} type="url" required placeholder="https://example.com/event.jpg" className={inputClass} />{fieldError("image")}</div>
-            <div className="sm:col-span-2"><label htmlFor="event-description" className="text-sm font-semibold">Description</label><textarea id="event-description" name="description" aria-invalid={Boolean(fieldErrors.description?.length)} aria-describedby={fieldErrors.description?.length ? "event-description-error" : undefined} required maxLength={5000} rows={5} placeholder="What’s happening? Tell people what they can look forward to." className={`${inputClass} resize-y leading-7`} />{fieldError("description")}</div>
+            <div className="sm:col-span-2"><label htmlFor="event-title" className="text-sm font-semibold">Event title</label><input id="event-title" name="title" defaultValue={initial?.title ?? ""} aria-invalid={Boolean(fieldErrors.title?.length)} aria-describedby={fieldErrors.title?.length ? "event-title-error" : undefined} required maxLength={200} placeholder="e.g. Under the stars: music night" className={inputClass} />{fieldError("title")}</div>
+            <div><label htmlFor="event-category" className="text-sm font-semibold">Category</label><div className="relative mt-2" aria-busy={categoriesLoading}>{categoriesLoading && <Skeleton className="pointer-events-none absolute inset-0 z-10 rounded-2xl" />}<select id="event-category" name="categoryId" aria-invalid={Boolean(fieldErrors.categoryId?.length)} aria-describedby={fieldErrors.categoryId?.length ? "event-categoryId-error" : undefined} required value={categoryId} onChange={event => setCategoryId(event.target.value)} disabled={categoriesLoading || Boolean(categoriesError) || !categories.length} className={`${inputClass.replace("mt-2 ", "")} appearance-none pr-12`}><option value="" disabled>{categoriesLoading ? "Loading categories…" : "Choose a category"}</option>{categories.map(category => <option key={category.id} value={category.id}>{category.category}{category.status ? "" : " (inactive)"}</option>)}</select><ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-secondary-foreground" /></div>{fieldError("categoryId")}{categoriesError && <div role="alert" className="mt-2 text-sm leading-6 text-destructive">{categoriesError}<button type="button" onClick={() => void loadCategories()} className="ml-2 min-h-11 rounded-lg px-2 font-semibold underline">Retry</button></div>}{!categoriesLoading && !categoriesError && !categories.length && <p className="mt-2 text-sm leading-6 text-secondary-foreground">No active categories yet. <Link href="/admin" className="font-semibold underline">Add or activate one on the admin page</Link> first.</p>}</div>
+            <div><label htmlFor="event-city" className="text-sm font-semibold">City</label><input id="event-city" name="city" defaultValue={initial?.city ?? ""} aria-invalid={Boolean(fieldErrors.city?.length)} aria-describedby={fieldErrors.city?.length ? "event-city-error" : undefined} required maxLength={100} placeholder="e.g. Coimbatore" className={inputClass} />{fieldError("city")}</div>
+            <div><label htmlFor="event-date" className="text-sm font-semibold">Date</label><input id="event-date" name="date" defaultValue={initial?.date ?? ""} aria-invalid={Boolean(fieldErrors.date?.length)} aria-describedby={fieldErrors.date?.length ? "event-date-error" : undefined} type="date" required className={inputClass} />{fieldError("date")}</div>
+            <div><label htmlFor="event-time" className="text-sm font-semibold">Time (IST)</label><input id="event-time" name="time" defaultValue={initial?.time ?? ""} aria-invalid={Boolean(fieldErrors.time?.length)} aria-describedby={fieldErrors.time?.length ? "event-time-error" : undefined} type="time" required className={inputClass} />{fieldError("time")}</div>
+            <div><label htmlFor="event-price" className="text-sm font-semibold">Price (₹)</label><input id="event-price" name="price" defaultValue={initial?.price ?? ""} aria-invalid={Boolean(fieldErrors.price?.length)} aria-describedby={fieldErrors.price?.length ? "event-price-error" : undefined} type="number" inputMode="decimal" required min="0" step="0.01" placeholder="0" className={inputClass} />{fieldError("price")}<p className="mt-2 text-xs text-[#756477]">Enter 0 for a free event.</p></div>
+            <div><label htmlFor="event-image" className="text-sm font-semibold">Image URL</label><input id="event-image" name="imageUrl" defaultValue={initial?.image ?? ""} aria-invalid={Boolean(fieldErrors.image?.length)} aria-describedby={fieldErrors.image?.length ? "event-image-error" : undefined} type="url" required placeholder="https://example.com/event.jpg" className={inputClass} />{fieldError("image")}</div>
+            <div className="sm:col-span-2"><label htmlFor="event-description" className="text-sm font-semibold">Description</label><textarea id="event-description" name="description" defaultValue={initial?.description ?? ""} aria-invalid={Boolean(fieldErrors.description?.length)} aria-describedby={fieldErrors.description?.length ? "event-description-error" : undefined} required maxLength={5000} rows={5} placeholder="What’s happening? Tell people what they can look forward to." className={`${inputClass} resize-y leading-7`} />{fieldError("description")}</div>
           </div>
           <fieldset className="rounded-2xl border border-[#eadfd8] bg-background p-4 sm:p-5">
             <legend className="px-2 text-sm font-semibold">Event status</legend>
@@ -140,8 +145,8 @@ export function EventForm() {
           </fieldset>
           {message && <p role="alert" className="rounded-2xl bg-secondary p-4 text-sm leading-7 text-secondary-foreground">{message}</p>}
           <div className="flex flex-col-reverse gap-3 border-t border-[#eadfd8] pt-6 sm:flex-row sm:justify-end">
-            <Link href="/admin" className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#dfd4df] px-6 text-sm font-semibold text-secondary-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary">Cancel</Link>
-            <Button type="submit" disabled={isSubmitting || categoriesLoading || Boolean(categoriesError) || !categories.length} className="h-12 rounded-full px-6">{isSubmitting ? <><LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" /> Saving event…</> : <><Plus className="size-4" aria-hidden="true" /> Add event</>}</Button>
+            <Link href={initial ? `/admin/event/${initial.id}` : "/admin"} className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#dfd4df] px-6 text-sm font-semibold text-secondary-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary">Cancel</Link>
+            <Button type="submit" disabled={isSubmitting || categoriesLoading || Boolean(categoriesError) || !categories.length} className="h-12 rounded-full px-6">{isSubmitting ? <><LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" /> Saving event…</> : <>{isEdit ? <Pencil className="size-4" aria-hidden="true" /> : <Plus className="size-4" aria-hidden="true" />}{isEdit ? "Save changes" : "Add event"}</>}</Button>
           </div>
         </fieldset>
       </form>

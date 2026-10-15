@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Layers3, LoaderCircle, MapPin, Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Layers3, MapPin, Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
 import { AddUserDialog } from "@/components/auth/add-user-dialog";
 import { CategoriesDialog } from "@/components/admin/categories-dialog";
+import { EventsTableSkeleton } from "@/components/admin/loading-skeletons";
 import { useConfirmation } from "@/components/ui/confirmation-dialog";
 
 import { toEventView, type EventRecord, type EventView } from "@/lib/events/types";
@@ -147,7 +148,7 @@ export function EventsBoard() {
         {filterError && <p role="alert" className="mt-4 text-sm text-destructive">{filterError}</p>}
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[#eadfd8] pt-4 sm:flex sm:justify-end"><button type="button" onClick={clearFilters} className="min-h-12 rounded-full px-3 text-sm font-semibold text-secondary-foreground hover:bg-secondary sm:px-5">Clear filters</button><button type="submit" className="min-h-12 rounded-full bg-primary px-3 text-sm font-semibold text-white hover:bg-primary/90 sm:px-5">Apply filters</button></div>
       </form>
-      {loading ? <p role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-secondary-foreground"><LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden="true" />Loading events…</p> : loadError ? <div role="alert" className="mt-6 rounded-3xl border border-[#eadfd8] bg-white p-6 text-center"><p className="text-sm leading-7 text-secondary-foreground">{loadError}</p><button type="button" onClick={() => void load()} className="mt-3 min-h-12 rounded-full px-5 text-sm font-semibold text-primary hover:bg-secondary">Try again</button></div> : <>
+      {loading ? <EventsTableSkeleton /> : loadError ? <div role="alert" className="mt-6 rounded-3xl border border-[#eadfd8] bg-white p-6 text-center"><p className="text-sm leading-7 text-secondary-foreground">{loadError}</p><button type="button" onClick={() => void load()} className="mt-3 min-h-12 rounded-full px-5 text-sm font-semibold text-primary hover:bg-secondary">Try again</button></div> : <>
       <p className="mt-5 text-xs font-medium text-[#756477]">{filtered.length} events</p>
       <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:hidden">
         {visibleEvents.map(event => (

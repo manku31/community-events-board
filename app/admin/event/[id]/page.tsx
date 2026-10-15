@@ -5,5 +5,5 @@ import { EventDetails } from "@/components/admin/event-details";
 export const metadata: Metadata = { title: "Event details | Community Events Board" };
 
 export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  return <AdminShell><EventDetails params={params} /></AdminShell>;
+  return <AdminShell loadingVariant="details"><EventDetails params={params} /></AdminShell>;
 }

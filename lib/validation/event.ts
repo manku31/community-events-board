@@ -16,3 +16,6 @@ export const createEventSchema = z.strictObject({
   description: z.string().trim().min(1, "Enter the event description.").max(5000, "Use no more than 5000 characters for the description."),
   status: z.boolean().default(true),
 });
+
+export const updateEventSchema = createEventSchema.partial().extend({ status: z.boolean().optional() })
+  .refine(value => Object.values(value).some(field => field !== undefined), "Provide event details to update.");

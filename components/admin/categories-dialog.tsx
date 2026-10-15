@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Dialog } from "@base-ui/react/dialog";
 import { ChevronLeft, ChevronRight, Layers3, LoaderCircle, Pencil, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EventsTableSkeleton } from "@/components/admin/loading-skeletons";
 import type { ApiResponse } from "@/lib/api/types";
 import type { Category } from "@/lib/categories/types";
 import { createCategorySchema } from "@/lib/validation/category";
@@ -174,7 +175,7 @@ export function CategoriesDialog({ open, onOpenChange }: { open: boolean; onOpen
             <button type="button" onClick={() => { setNameFilter(""); setStatusFilter(""); setPage(1); }} className="mt-3 min-h-11 rounded-full px-3 text-xs font-semibold text-primary hover:bg-secondary">Clear filters</button>
           </div>
           {mutationError && <p role="alert" className="mt-4 rounded-xl bg-white p-4 text-sm leading-6 text-destructive">{mutationError}</p>}
-          {loading ? <p role="status" className="flex items-center justify-center gap-2 py-12 text-sm text-secondary-foreground"><LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden="true" />Loading categories…</p> : error ? <div role="alert" className="mt-5 rounded-2xl bg-white p-5 text-sm leading-7"><p>{error}</p><button onClick={() => void load()} className="mt-2 min-h-11 rounded-full px-4 font-semibold text-primary hover:bg-secondary">Try again</button></div> : (
+          {loading ? <EventsTableSkeleton categories /> : error ? <div role="alert" className="mt-5 rounded-2xl bg-white p-5 text-sm leading-7"><p>{error}</p><button onClick={() => void load()} className="mt-2 min-h-11 rounded-full px-4 font-semibold text-primary hover:bg-secondary">Try again</button></div> : (
             <div className="mt-5 overflow-hidden rounded-2xl border border-[#eadfd8] bg-white">
               <div role="region" aria-label="Categories table" tabIndex={0} className="max-h-[45dvh] overflow-auto focus-visible:outline-2 focus-visible:outline-primary">
                 <table className="w-full min-w-[480px] text-left text-sm">

@@ -5,5 +5,5 @@ import { EventForm } from "@/components/admin/event-form";
 export const metadata: Metadata = { title: "Add event | Community Events Board" };
 
 export default function AddEventPage() {
-  return <AdminShell><EventForm /></AdminShell>;
+  return <AdminShell loadingVariant="form"><EventForm /></AdminShell>;
 }

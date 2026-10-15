@@ -14,6 +14,18 @@ All event endpoints require a current active admin and use `Cache-Control: no-st
 
 The All events table and mobile cards display 10 filtered events per page with shared Previous/Next controls and a result range. Searching, applying filters, or clearing filters resets to page 1. Pages clamp to the available results when a status change reduces the filtered list. Pagination is applied locally to the fetched admin event list.
 
+## Visitor browsing
+
+`/home` keeps its server-side session check and redirects admins to `/admin`. It now shows a personalised hero and event browser. The browser calls public `GET /api/events`; no admin endpoint is exposed to visitors.
+
+`GET /api/events` accepts `search` (up to 200 characters), `city` (up to 100), `categoryId` (positive integer), `page` (default 1), and `pageSize` (default 6, maximum 24). Unknown or invalid query fields return 422. Searches match title/description case-insensitively, cities match case-insensitively, and all filters combine. Database pagination happens after filtering, with stable ordering by date, time, and ID ascending. Out-of-range pages clamp to the last available page. Empty results report page 1 of 1.
+
+Only active events in active categories whose local date/time is later than the current IST date/time are returned. The date and time columns are compared separately using Indian calendar/clock values. Responses use `data.events`, `data.categories` (all active category choices), `data.cities` (cities with eligible events), and `data.pagination` (`page`, `pageSize`, `total`, `totalPages`). There are no user records, tokens, or admin-only lists in this response. All responses use `Cache-Control: no-store`.
+
+`GET /api/events/:id` uses the same visibility and upcoming checks; missing, past, or inactive events return 404. The visitor page `/events/:id` calls it and renders the shared event card with the full description toggle. Guests can open event details; signed-in visitors retain their account menu. No admin edit action appears there.
+
+The home UI debounces text searches by 300 ms, aborts superseded requests, and shows skeleton cards, retryable errors, and empty states. Filters reset to page 1 and use server pagination. Cards show Indian currency and IST dates, with an image fallback and a details link. Favourites, reminders, and card design are not part of this step. No automated tests, browser test flows, or test data writes were run.
+
 Send `Content-Type: application/json`:
 
 ```json

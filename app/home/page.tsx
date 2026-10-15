@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { CalendarDays, Music2, Palette, PartyPopper, Smile, Sparkles, Trophy, Utensils } from "lucide-react";
+import { ArrowDownRight, CalendarDays, Music2, Sparkles } from "lucide-react";
+import { EventsBrowser } from "@/components/events/events-browser";
+import { HomeLoading } from "@/components/events/home-loading";
 import { ApiError } from "@/lib/api";
 import { ACCESS_COOKIE_NAME } from "@/lib/auth/cookies";
 import { getUserFromAccessToken } from "@/lib/auth/guards";
@@ -12,14 +14,6 @@ export const metadata: Metadata = {
   title: "Home | Community Events Board",
   description: "Your home for local events and good times with your community.",
 };
-
-const categories = [
-  { name: "Music", icon: Music2, colour: "bg-violet-100 text-violet-900" },
-  { name: "Workshop", icon: Palette, colour: "bg-sky-100 text-sky-900" },
-  { name: "Food", icon: Utensils, colour: "bg-orange-100 text-orange-900" },
-  { name: "Sports", icon: Trophy, colour: "bg-lime-100 text-lime-900" },
-  { name: "Kids", icon: PartyPopper, colour: "bg-pink-100 text-pink-900" },
-];
 
 async function UserLanding() {
   const token = (await cookies()).get(ACCESS_COOKIE_NAME)?.value;
@@ -34,44 +28,21 @@ async function UserLanding() {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <SiteHeader user={user} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8 sm:py-12">
-        <section className="grid items-center gap-8 rounded-3xl border border-[#ddcee9] bg-secondary p-6 sm:p-10 lg:grid-cols-[1.5fr_1fr]">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-8 sm:py-10">
+        <section className="relative isolate overflow-hidden rounded-[2rem] border border-[#ddcee9] bg-secondary p-6 sm:p-10 lg:grid lg:grid-cols-[1.5fr_1fr] lg:items-center lg:gap-8">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-24 -right-12 -z-10 size-80 rounded-full border-[45px] border-[#dfcdec]/70" />
           <div className="min-w-0">
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-medium text-secondary-foreground sm:text-sm">
-              <Sparkles className="size-4 shrink-0" aria-hidden="true" /> A good day starts close to home.
-            </p>
-            <h1 className="text-3xl font-bold leading-tight tracking-tight wrap-anywhere sm:text-5xl">Welcome, <span className="text-primary">{name}!</span></h1>
-            <p className="mt-4 max-w-lg text-base leading-7 text-secondary-foreground">A new experience, a familiar face, a reason to step out. Make a little room for something fun.</p>
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-2 text-[10px] font-semibold tracking-wide text-secondary-foreground sm:text-xs"><Sparkles className="size-3.5" aria-hidden="true" /> Your neighbourhood. Your kind of good time.</p>
+            <h1 className="text-3xl font-bold leading-tight tracking-tight wrap-anywhere sm:text-5xl">Hey, <span className="text-primary">{name}.</span><br />Let’s make some plans.</h1>
+            <p className="mt-5 max-w-md text-sm leading-7 text-secondary-foreground sm:text-base">An evening of music. A new little skill. A reason to get out and meet your people.</p>
+            <a href="#events" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-white shadow-[0_3px_0_#96352b] hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">Find your next plan<ArrowDownRight className="size-4" aria-hidden="true" /></a>
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border border-white bg-white/70 p-5 lg:flex-col lg:gap-5 lg:p-8 lg:text-center">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-foreground lg:size-20"><Smile className="size-8 lg:size-11" aria-hidden="true" /></span>
-            <div>
-              <p className="text-lg font-semibold">More little adventures.</p>
-              <p className="mt-1 text-sm leading-6 text-secondary-foreground">More big smiles.</p>
-            </div>
+          <div aria-hidden="true" className="relative mx-auto mt-9 hidden w-full max-w-xs sm:block lg:mt-0">
+            <div className="absolute -top-5 right-0 rotate-12 rounded-2xl border border-white bg-[#fff0c8] p-4 text-accent-foreground shadow-sm"><Music2 className="size-8" strokeWidth={1.5} /></div>
+            <div className="-rotate-3 rounded-[1.7rem] border border-white bg-[#fffaf5] p-6 shadow-[0_9px_0_#d6c5e3]"><span className="mb-5 flex size-14 items-center justify-center rounded-2xl bg-[#ffe3d1] text-primary"><CalendarDays className="size-7" strokeWidth={1.5} /></span><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8b798b]">Save a little space for</p><p className="mt-3 text-3xl font-bold leading-9 tracking-tight">Something<br /><span className="text-primary">worth going to.</span></p><div className="mt-5 flex items-center gap-2 border-t border-dashed border-[#dfd4df] pt-4 text-xs font-medium text-[#756477]"><Sparkles className="size-4 text-accent-foreground" />Good company included.</div></div>
           </div>
         </section>
-
-        <section className="mt-10 sm:mt-12" aria-labelledby="interests-heading">
-          <h2 id="interests-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">Good times come in all kinds.</h2>
-          <p className="mt-2 text-sm leading-6 text-[#6c5c70]">A little inspiration for your next outing.</p>
-          <ul className="mt-5 flex flex-wrap gap-3">
-            {categories.map(({ name: category, icon: Icon, colour }) => (
-              <li key={category} className={`inline-flex items-center gap-2.5 rounded-2xl border border-black/5 px-4 py-3 text-sm font-semibold ${colour}`}>
-                <Icon className="size-5" aria-hidden="true" /> {category}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="mt-10 sm:mt-12" aria-labelledby="upcoming-heading">
-          <h2 id="upcoming-heading" className="text-xl font-semibold tracking-tight sm:text-2xl">Coming up in your community</h2>
-          <div className="mt-5 rounded-3xl border border-dashed border-[#dfd4df] bg-white px-5 py-10 text-center sm:py-12">
-            <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground"><CalendarDays className="size-7" aria-hidden="true" /></span>
-            <h3 className="text-lg font-semibold">Good things are on the way.</h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-7 text-[#6c5c70]">Events will appear here as they’re added. Come back soon for a little local inspiration.</p>
-          </div>
-        </section>
+        <EventsBrowser />
       </main>
       <footer className="mt-4 border-t border-[#eadfd8] px-4 py-6 text-center text-sm text-[#756477] sm:px-8">Made for good days and great company.</footer>
     </div>
@@ -80,7 +51,7 @@ async function UserLanding() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<main className="flex min-h-dvh items-center justify-center bg-background px-4 text-secondary-foreground"><p role="status">Getting your home ready…</p></main>}>
+    <Suspense fallback={<HomeLoading />}>
       <UserLanding />
     </Suspense>
   );

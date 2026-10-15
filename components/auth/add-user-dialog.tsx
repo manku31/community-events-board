@@ -74,8 +74,8 @@ export function AddUserDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   return (
     <Dialog.Root open={open} onOpenChange={changeOpen}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-[#302033]/35 backdrop-blur-sm transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 motion-reduce:transition-none" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-[#eadfd8] bg-background p-5 shadow-xl outline-none transition-[opacity,scale] duration-200 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 motion-reduce:transition-none sm:p-8">
+        <Dialog.Backdrop className="modal-backdrop fixed inset-0 z-50 bg-[#302033]/35 backdrop-blur-sm" />
+        <Dialog.Popup className="modal-popup fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-[#eadfd8] bg-background p-5 shadow-xl outline-none sm:p-8">
           <Dialog.Close disabled={isSubmitting} aria-label="Close add user" className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-secondary-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"><X className="size-5" aria-hidden="true" /></Dialog.Close>
           <span className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-accent text-accent-foreground"><UserPlus className="size-6" aria-hidden="true" /></span>
           <Dialog.Title className="pr-8 text-2xl font-bold tracking-tight">Add user</Dialog.Title>

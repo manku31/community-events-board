@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { CalendarDays, MapPin, Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
+import { CalendarDays, Layers3, MapPin, Plus, Search, SlidersHorizontal, UserPlus } from "lucide-react";
 import { AddUserDialog } from "@/components/auth/add-user-dialog";
+import { CategoriesDialog } from "@/components/admin/categories-dialog";
+import { useConfirmation } from "@/components/ui/confirmation-dialog";
 
 import { sampleEvents } from "@/lib/events/sample-events";
 
@@ -21,8 +23,10 @@ function ActiveSwitch({ title, active, onToggle }: { title: string; active: bool
 }
 
 export function EventsBoard() {
+  const { confirm, confirmationDialog } = useConfirmation();
   const [events, setEvents] = useState(sampleEvents);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState(emptyFilters);
   const [draft, setDraft] = useState(emptyFilters);
@@ -30,8 +34,10 @@ export function EventsBoard() {
   const [filterError, setFilterError] = useState("");
   const filterCount = Object.values(filters).filter(Boolean).length;
   const cities = [...new Set(events.map(event => event.city))].sort();
-  function toggleEvent(id: number) {
-    setEvents(current => current.map(event => event.id === id ? { ...event, active: !event.active } : event));
+  async function toggleEvent(id: number) {
+    const selected = events.find(event => event.id === id);
+    if (!selected || !await confirm({ description: `Make “${selected.title}” ${selected.active ? "inactive" : "active"}?` })) return;
+    setEvents(current => current.map(event => event.id === id ? { ...event, active: !selected.active } : event));
   }
   const filtered = events.filter(event => {
     const date = event.date.slice(0, 10);
@@ -71,6 +77,7 @@ export function EventsBoard() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">All events</h1><p className="mt-3 text-sm leading-7 text-[#756477]">Little plans. Big community energy.</p></div>
         <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+          <button type="button" onClick={() => setIsCategoryOpen(true)} className="col-span-2 inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#ddcee9] bg-white px-5 text-sm font-semibold text-secondary-foreground hover:bg-secondary/50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:col-span-1"><Layers3 className="size-4" aria-hidden="true" />Category</button>
           <button type="button" onClick={() => setIsAddUserOpen(true)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-secondary px-5 text-sm font-semibold text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"><UserPlus className="size-4" aria-hidden="true" /> Add user</button>
           <Link href="/admin/event" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"><Plus className="size-4" aria-hidden="true" /> Add event</Link>
         </div>
@@ -138,6 +145,8 @@ export function EventsBoard() {
         </div>
       </div>
       <AddUserDialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen} />
+      <CategoriesDialog open={isCategoryOpen} onOpenChange={setIsCategoryOpen} />
+      {confirmationDialog}
     </>
   );
 }

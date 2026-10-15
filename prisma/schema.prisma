@@ -37,3 +37,11 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
 }
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  category  String
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

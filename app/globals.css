@@ -191,10 +191,40 @@
   min-width: 0;
 }
 
+.modal-backdrop {
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.modal-popup {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: center;
+  transition: opacity 220ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-backdrop[data-starting-style],
+.modal-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.modal-popup[data-starting-style],
+.modal-popup[data-ending-style] {
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+}
+
+.modal-popup[data-ending-style],
+.modal-backdrop[data-ending-style] {
+  transition-duration: 160ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .user-island-trigger,
   .user-island-avatar,
-  .user-island-panel {
+  .user-island-panel,
+  .modal-popup,
+  .modal-backdrop {
     transition: none;
   }
 }

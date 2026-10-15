@@ -1,0 +1,15 @@
+# Category management
+
+On `/admin`, **Category** opens a modal listing category names, Active switches, created times, and Edit icons. IDs and updated times remain in the API response but are hidden in the table. **Add category** opens a nested form with a required name and Active checkbox (default true). Creation refreshes the list. Edit opens a prefilled name-only form. The shared confirmation modal asks before saving a rename or changing any Active/Inactive control, including new-form status controls and event switches. Only **Yes** allows the change; cancellation sends no mutation request. After confirmation, saved category switches update immediately, disable repeated writes while saving, and roll back with an error if saving fails. Event form category choices remain unchanged.
+
+The modal filters by category name (case-insensitive substring) and active status only. Both filters work together. Pagination defaults to 5 rows, with a 10-row option and Previous/Next controls. Filtering or changing page size resets to page 1; the current page is clamped when editing or status changes reduce the filtered results. Filtering and pagination operate on the category list already loaded from the API.
+
+All endpoints use the shared JSON envelope and `Cache-Control: no-store`:
+
+- `GET /api/admin/categories`: returns HTTP 200 with `data.categories`, including all active and inactive rows ordered by descending ID. Each row includes `id`, `category`, `status`, `createdAt`, `updatedAt`; timestamps serialize to ISO strings.
+- `POST /api/admin/categories`: accepts JSON `{ "category": "Music", "status": true }` and returns HTTP 201 with `data.category`. Name is trimmed and must be 1–100 characters. Status must be Boolean when supplied and defaults to true. Unknown fields are rejected. The schema does not enforce unique category names.
+- `PATCH /api/admin/categories/:id`: accepts `{ "category": "New name" }`, `{ "status": false }`, or both. At least one field is required, names use the same validation, and unknown fields are rejected. Omitted fields are preserved. Returns HTTP 200 with `data.category`, 400 for invalid IDs, or 404 for a missing category. Prisma maintains `updatedAt` automatically.
+
+Authentication supports Bearer access tokens or browser HttpOnly access cookies. Both verify the current active account and database admin role. Cookie POST/PATCH requests require matching Origin; supplied cross-origin headers are rejected for all requests. Missing/invalid sessions return 401, non-admins 403, invalid payloads 422, invalid JSON 400, unsupported media types 415. Unexpected failures return generic 500 responses without database details.
+
+The UI shows loading, retryable errors, empty state, validation and success messages. No automated tests or API assertions are run, per project instructions. The shared Prisma cache replaces clients that are missing newly generated model delegates during development reloads. Unexpected category failures log only the operation, error type, and Prisma error code on the server; raw errors and submitted data are not logged or returned.
